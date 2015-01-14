@@ -36,13 +36,13 @@ public class DownloadSongsTask extends Task<Void> {
         int downloadCount = 0;
         for (String album : albumTracks.keySet()) {
             createDir(savePath, album);
-            List<String> tracks = albumTracks.get(album);
-            for (String track : tracks) {
-                updateMessage("Downloading " + track + " (total " + downloadCount + "/" + songCount + ")");
-                String title = artist + " - " + track;
-                String mp3FileName = savePath + album + "/" + title + ".mp3";
-                Downloader.downloadSong(title, mp3FileName + ".tmp");
-                fixMp3Tags(mp3FileName, artist, album, track);
+            List<String> titles = albumTracks.get(album);
+            for (String title : titles) {
+                updateMessage("Downloading " + title + " (total " + downloadCount + "/" + songCount + ")");
+                String fullTitle = artist + " - " + title;
+                String mp3FileName = savePath + album + "/" + fullTitle + ".mp3";
+                Downloader.downloadSong(fullTitle, mp3FileName + ".tmp");
+                fixMp3Tags(mp3FileName, artist, album, title, titles.indexOf(title) + 1);
                 downloadCount++;
             }
         }
@@ -63,12 +63,12 @@ public class DownloadSongsTask extends Task<Void> {
         }
     }
 
-    private static void fixMp3Tags(String mp3FileName, String artist, String album, String track) {
+    private static void fixMp3Tags(String mp3FileName, String artist, String album, String title, int trackNo) {
         String tmpFile = mp3FileName + ".tmp";
         try {
             Mp3File mp3file = new Mp3File(tmpFile);
-            editID3v1tags(mp3file, artist, album, track);
-            editID3v2tags(mp3file, artist, album, track);
+            editID3v1tags(mp3file, artist, album, title, trackNo);
+            editID3v2tags(mp3file, artist, album, title, trackNo);
 
             mp3file.save(mp3FileName);
             new File(tmpFile).delete();
@@ -83,7 +83,7 @@ public class DownloadSongsTask extends Task<Void> {
         }
     }
 
-    private static void editID3v1tags(Mp3File mp3file, String artist, String album, String track) {
+    private static void editID3v1tags(Mp3File mp3file, String artist, String album, String title, int trackNo) {
         ID3v1 id3v1Tag;
         if (mp3file.hasId3v1Tag()) {
             id3v1Tag =  mp3file.getId3v1Tag();
@@ -92,11 +92,12 @@ public class DownloadSongsTask extends Task<Void> {
             mp3file.setId3v1Tag(id3v1Tag);
         }
         id3v1Tag.setArtist(artist);
-        id3v1Tag.setTitle(track);
+        id3v1Tag.setTitle(title);
         id3v1Tag.setAlbum(album);
+        id3v1Tag.setTrack(String.valueOf(trackNo));
     }
 
-    private static void editID3v2tags(Mp3File mp3file, String artist, String album, String track) {
+    private static void editID3v2tags(Mp3File mp3file, String artist, String album, String title, int trackNo) {
         ID3v2 id3v2Tag;
         if (mp3file.hasId3v2Tag()) {
             id3v2Tag = mp3file.getId3v2Tag();
@@ -105,7 +106,8 @@ public class DownloadSongsTask extends Task<Void> {
             mp3file.setId3v2Tag(id3v2Tag);
         }
         id3v2Tag.setArtist(artist);
-        id3v2Tag.setTitle(track);
+        id3v2Tag.setTitle(title);
         id3v2Tag.setAlbum(album);
+        id3v2Tag.setTrack(String.valueOf(trackNo));
     }
 }

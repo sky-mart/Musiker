@@ -226,7 +226,7 @@ public class Downloader {
 //                System.out.println("\t" + track);
 //            }
 //        }
-        downloadSong("Scorpions - Still Loving You", "/User/Vlad/");
+        downloadSong("Scorpions - Still Loving You", "/Users/Vlad/");
     }
 }
 
