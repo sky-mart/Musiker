@@ -110,7 +110,7 @@ public class Ui extends Application {
             uri = uri.resolve("musiker.ps");
             OutputStream os = new FileOutputStream(uri.toString());
 
-            props.store(os, "Album Downloader Settings");
+            props.store(os, "Musiker Settings");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -299,7 +299,7 @@ public class Ui extends Application {
                 }
 
                 DirectoryChooser chooser = new DirectoryChooser();
-                chooser.setTitle("Choose direcory to save tracks");
+                chooser.setTitle("Choose directory to save tracks");
                 if (saveDir != null) {
                     chooser.setInitialDirectory(new File(saveDir));
                 }
