@@ -154,12 +154,25 @@ public class Downloader {
     public static void downloadSongs(String artist, Map<String, List<String>> albumTracks, String savePath)
     {
         for (String album : albumTracks.keySet()) {
+            createDir(savePath, album);
             List<String> tracks = albumTracks.get(album);
             for (String track : tracks) {
                 String title = artist + " - " + track;
-                String mp3FileName = savePath + title + ".mp3";
+                String mp3FileName = savePath + album + "/" + title + ".mp3";
                 downloadSong(title, mp3FileName + ".tmp");
                 fixMp3Tags(mp3FileName, artist, album, track);
+            }
+        }
+    }
+
+    private static void createDir(String path, String dirName) {
+        File theDir = new File(path + dirName);
+
+        if (!theDir.exists()) {
+            try{
+                theDir.mkdir();
+            } catch(SecurityException se){
+                se.printStackTrace();
             }
         }
     }
