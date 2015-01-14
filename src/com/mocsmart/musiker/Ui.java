@@ -273,29 +273,29 @@ public class Ui extends Application {
         downloadButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
-                String artist = artistField.getText();
-                final List<String> fullNames = new ArrayList<String>();
+                final String artist = artistField.getText();
+                List<String> chosenAlbums = albumListView.getSelectionModel().getSelectedItems();
+                final Map<String, List<String>> albumTracks = new HashMap<String, List<String>>();
 
                 String selectedMode = downloadMode.getSelectedToggle().getUserData().toString();
                 if (selectedMode.equalsIgnoreCase("Tracks")) {
-                    List<String> titles = trackListView.getSelectionModel().getSelectedItems();
-                    for (String title : titles) {
-                        fullNames.add(artist + " - " + title);
+                    if (chosenAlbums.size() > 1) {
+                        System.out.println("Choose only one album, pls");
+                        return;
+                    } else {
+                        String album = chosenAlbums.get(0);
+                        List<String> titles = trackListView.getSelectionModel().getSelectedItems();
+                        albumTracks.put(album, titles);
                     }
                 } else if (selectedMode.equalsIgnoreCase("Albums")) {
-                    List<String> albums = albumListView.getSelectionModel().getSelectedItems();
-                    for (String album : albums) {
-                        for (String title : cash.get(album)) {
-                            fullNames.add(artist + " - " + title);
-                        }
+                    for (String album : chosenAlbums) {
+                        albumTracks.put(album, cash.get(album));
                     }
                 } else if (selectedMode.equalsIgnoreCase("All")) {
                     List<String> albums = albumListView.getItems();
-                    /*for (String album : albums) {
-                        for (String title : cash.get(album)) {
-                            fullNames.add(artist + " - " + title);
-                        }
-                    }*/
+                    for (String album : albums) {
+                        albumTracks.put(album, cash.get(album));
+                    }
                 }
 
                 DirectoryChooser chooser = new DirectoryChooser();
@@ -304,13 +304,14 @@ public class Ui extends Application {
                     chooser.setInitialDirectory(new File(saveDir));
                 }
                 final File selectedDirectory = chooser.showDialog(stage);
+                if (selectedDirectory == null) return;
                 saveDir = selectedDirectory.getAbsolutePath();
 
                 Task<Void> downloadSongsTask = new Task<Void>() {
                     @Override
                     protected Void call() throws Exception {
                         updateMessage("Downloading...");
-                        Downloader.downloadSongs(fullNames, selectedDirectory.getAbsolutePath() + "/");
+                        Downloader.downloadSongs(artist, albumTracks, selectedDirectory.getAbsolutePath() + "/");
                         updateMessage("Downloaded");
                         return null;
                     }

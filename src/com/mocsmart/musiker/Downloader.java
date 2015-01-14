@@ -1,5 +1,6 @@
 package com.mocsmart.musiker;
 
+import com.mpatric.mp3agic.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -150,14 +151,66 @@ public class Downloader {
         return urlPart.replace(" ", "%20");
     }
 
-    public static void downloadSongs(List<String> titles, String savePath)
+    public static void downloadSongs(String artist, Map<String, List<String>> albumTracks, String savePath)
     {
-        for (String title : titles) {
-            downloadSong(title, savePath);
+        for (String album : albumTracks.keySet()) {
+            List<String> tracks = albumTracks.get(album);
+            for (String track : tracks) {
+                String title = artist + " - " + track;
+                String mp3FileName = savePath + title + ".mp3";
+                downloadSong(title, mp3FileName + ".tmp");
+                fixMp3Tags(mp3FileName, artist, album, track);
+            }
         }
     }
 
-    public static void downloadSong(String title, String savePath)
+    private static void fixMp3Tags(String mp3FileName, String artist, String album, String track) {
+        String tmpFile = mp3FileName + ".tmp";
+        try {
+            Mp3File mp3file = new Mp3File(tmpFile);
+            editID3v1tags(mp3file, artist, album, track);
+            editID3v2tags(mp3file, artist, album, track);
+
+            mp3file.save(mp3FileName);
+            new File(tmpFile).delete();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (UnsupportedTagException e) {
+            e.printStackTrace();
+        } catch (InvalidDataException e) {
+            e.printStackTrace();
+        } catch (NotSupportedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void editID3v1tags(Mp3File mp3file, String artist, String album, String track) {
+        ID3v1 id3v1Tag;
+        if (mp3file.hasId3v1Tag()) {
+            id3v1Tag =  mp3file.getId3v1Tag();
+        } else {
+            id3v1Tag = new ID3v1Tag();
+            mp3file.setId3v1Tag(id3v1Tag);
+        }
+        id3v1Tag.setArtist(artist);
+        id3v1Tag.setTitle(track);
+        id3v1Tag.setAlbum(album);
+    }
+
+    private static void editID3v2tags(Mp3File mp3file, String artist, String album, String track) {
+        ID3v2 id3v2Tag;
+        if (mp3file.hasId3v2Tag()) {
+            id3v2Tag = mp3file.getId3v2Tag();
+        } else {
+            id3v2Tag = new ID3v24Tag();
+            mp3file.setId3v2Tag(id3v2Tag);
+        }
+        id3v2Tag.setArtist(artist);
+        id3v2Tag.setTitle(track);
+        id3v2Tag.setAlbum(album);
+    }
+
+    public static void downloadSong(String title, String saveAs)
     {
         String formattedTitle = replacementForUrl(title);
         String urlString = vkApiUrl +
@@ -176,14 +229,13 @@ public class Downloader {
             String downloadUrl = urlFromXML(document);
 
             downloadUrl = downloadUrl.replace("\\", "");
-//            System.out.println(downloadUrl);
 
             url = new URL(downloadUrl);
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
 
             is = connection.getInputStream();
-            OutputStream os = new FileOutputStream(savePath + title + ".mp3");
+            OutputStream os = new FileOutputStream(saveAs);
 
             byte[] buffer = new byte[1024];
             int bytesRead;
@@ -197,6 +249,7 @@ public class Downloader {
             os.close();
 
             //System.out.println("Song downloaded: " + savePath + title + ".mp3");
+            
         } catch (ProtocolException e) {
             e.printStackTrace();
         } catch (MalformedURLException e) {
