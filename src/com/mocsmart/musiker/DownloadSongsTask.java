@@ -13,29 +13,41 @@ public class DownloadSongsTask extends Task<Void> {
     private final String artist;
     private final Map<String, List<String>> albumTracks;
     private final String savePath;
+    private int songCount;
 
     DownloadSongsTask(String artist, Map<String, List<String>> albumTracks, String savePath) {
         this.artist = artist;
         this.albumTracks = albumTracks;
         this.savePath = savePath;
+        countSongs();
+    }
+
+    private void countSongs() {
+        songCount = 0;
+        for (String album: albumTracks.keySet()) {
+            songCount += albumTracks.get(album).size();
+        }
     }
 
     @Override
     protected Void call() throws Exception {
-        updateMessage("Downloading...");
+        updateMessage("Download started");
 
+        int downloadCount = 0;
         for (String album : albumTracks.keySet()) {
             createDir(savePath, album);
             List<String> tracks = albumTracks.get(album);
             for (String track : tracks) {
+                updateMessage("Downloading " + track + " (total " + downloadCount + "/" + songCount + ")");
                 String title = artist + " - " + track;
                 String mp3FileName = savePath + album + "/" + title + ".mp3";
                 Downloader.downloadSong(title, mp3FileName + ".tmp");
                 fixMp3Tags(mp3FileName, artist, album, track);
+                downloadCount++;
             }
         }
 
-        updateMessage("Downloaded");
+        updateMessage("Download finished");
         return null;
     }
 

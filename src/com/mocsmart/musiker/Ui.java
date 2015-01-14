@@ -308,15 +308,6 @@ public class Ui extends Application {
                 saveDir = selectedDirectory.getAbsolutePath() + "/";
 
                 DownloadSongsTask downloadSongsTask = new DownloadSongsTask(artist, albumTracks, saveDir);
-//                Task<Void> downloadSongsTask = new Task<Void>() {
-//                    @Override
-//                    protected Void call() throws Exception {
-//                        updateMessage("Downloading...");
-//                        Downloader.downloadSongs(artist, albumTracks, selectedDirectory.getAbsolutePath() + "/");
-//                        updateMessage("Downloaded");
-//                        return null;
-//                    }
-//                };
                 stateLabel.textProperty().bind(downloadSongsTask.messageProperty());
                 new Thread(downloadSongsTask).start();
             }
