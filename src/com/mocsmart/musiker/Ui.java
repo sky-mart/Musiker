@@ -305,17 +305,18 @@ public class Ui extends Application {
                 }
                 final File selectedDirectory = chooser.showDialog(stage);
                 if (selectedDirectory == null) return;
-                saveDir = selectedDirectory.getAbsolutePath();
+                saveDir = selectedDirectory.getAbsolutePath() + "/";
 
-                Task<Void> downloadSongsTask = new Task<Void>() {
-                    @Override
-                    protected Void call() throws Exception {
-                        updateMessage("Downloading...");
-                        Downloader.downloadSongs(artist, albumTracks, selectedDirectory.getAbsolutePath() + "/");
-                        updateMessage("Downloaded");
-                        return null;
-                    }
-                };
+                DownloadSongsTask downloadSongsTask = new DownloadSongsTask(artist, albumTracks, saveDir);
+//                Task<Void> downloadSongsTask = new Task<Void>() {
+//                    @Override
+//                    protected Void call() throws Exception {
+//                        updateMessage("Downloading...");
+//                        Downloader.downloadSongs(artist, albumTracks, selectedDirectory.getAbsolutePath() + "/");
+//                        updateMessage("Downloaded");
+//                        return null;
+//                    }
+//                };
                 stateLabel.textProperty().bind(downloadSongsTask.messageProperty());
                 new Thread(downloadSongsTask).start();
             }
