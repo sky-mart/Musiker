@@ -51,14 +51,14 @@ public class Downloader {
     public static List<String> getAlbums(String artist)
     {
         List<String> albums = null;
-
-        artist = replacementForUrl(artist);
-        String urlString = lastfmApiUrl +
-                "method=artist.gettopalbums&" +
-                "artist=" + artist +
-                "&api_key=" +lastfmApiKey;
-
+        String urlString = null;
         try {
+            urlString = lastfmApiUrl +
+                    "method=artist.gettopalbums&" +
+                    "artist=" + URLEncoder.encode(artist, "UTF-8")  +
+                    "&autocorrect=1" +
+                    "&api_key=" + lastfmApiKey;
+
             URL url = new URL(urlString);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
@@ -68,6 +68,8 @@ public class Downloader {
             is.close();
             albums = albumsFromXML(document);
 
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -99,16 +101,15 @@ public class Downloader {
     public static List<String> getTracks(String artist, String album)
     {
         List<String> tracks = null;
-
-        artist = replacementForUrl(artist);
-        album = replacementForUrl(album);
-        String urlString = lastfmApiUrl +
-                "method=album.getinfo&" +
-                "artist=" + artist +
-                "&album=" + album +
-                "&api_key=" +lastfmApiKey;
+        String urlString = null;
 
         try {
+            urlString = lastfmApiUrl +
+                    "method=album.getinfo&" +
+                    "artist=" + URLEncoder.encode(artist, "UTF-8") +
+                    "&album=" + URLEncoder.encode(album, "UTF-8") +
+                    "&api_key=" + lastfmApiKey;
+
             URL url = new URL(urlString);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
@@ -118,6 +119,8 @@ public class Downloader {
             is.close();
             tracks = tracksFromXML(document);
 
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -146,13 +149,13 @@ public class Downloader {
         return tracks;
     }
 
-    private static String replacementForUrl(String urlPart)
-    {
-        return urlPart.replace(" ", "%20");
-    }
-
     public static String downloadUrl(String title) {
-        String formattedTitle = replacementForUrl(title);
+        String formattedTitle = null;
+        try {
+            formattedTitle = URLEncoder.encode(title, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
         String urlString = vkApiUrl +
                 "audio.search.xml?" +
                 "q=" + formattedTitle +

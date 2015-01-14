@@ -216,12 +216,14 @@ public class Ui extends Application {
 
         Button downloadButton = new Button("Download");
         Button playButton = new Button("Play");
+        Button pauseButton = new Button("Pause");
 
         rbuttons.getChildren().add(downloadAlbums);
         rbuttons.getChildren().add(downloadTracks);
         rbuttons.getChildren().add(downloadAll);
         rbuttons.getChildren().add(downloadButton);
         rbuttons.getChildren().add(playButton);
+        rbuttons.getChildren().add(pauseButton);
 
         artistField.setOnKeyPressed(new EventHandler<KeyEvent>(){
             @Override
@@ -331,12 +333,23 @@ public class Ui extends Application {
                         return;
                     }
 
-                    player = new MediaPlayer(new Media(Downloader.downloadUrl(titles.get(0))));
+                    player = new MediaPlayer(new Media(Downloader.downloadUrl(artist + " - " + titles.get(0))));
                     player.play();
                     source.setText("Stop");
                 } else if (source.getText().equalsIgnoreCase("Stop")) {
                     player.stop();
                     source.setText("Play");
+                }
+            }
+        });
+
+        pauseButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                if (player.getStatus().equals(MediaPlayer.Status.PLAYING)) {
+                    player.pause();
+                } else {
+                    player.play();
                 }
             }
         });
