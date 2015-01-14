@@ -16,6 +16,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.DirectoryChooser;
@@ -49,6 +51,8 @@ public class Ui extends Application {
     private String saveDir;
 
     private Map<String, List<String>> cash = new HashMap<String, List<String>>(); // key - album name, value - list of tracks
+
+    private MediaPlayer player;
 
     public static void main(String[] args) {
         launch(args);
@@ -211,11 +215,13 @@ public class Ui extends Application {
         downloadAll.setUserData("All");
 
         Button downloadButton = new Button("Download");
+        Button playButton = new Button("Play");
 
         rbuttons.getChildren().add(downloadAlbums);
         rbuttons.getChildren().add(downloadTracks);
         rbuttons.getChildren().add(downloadAll);
         rbuttons.getChildren().add(downloadButton);
+        rbuttons.getChildren().add(playButton);
 
         artistField.setOnKeyPressed(new EventHandler<KeyEvent>(){
             @Override
@@ -310,6 +316,28 @@ public class Ui extends Application {
                 DownloadSongsTask downloadSongsTask = new DownloadSongsTask(artist, albumTracks, saveDir);
                 stateLabel.textProperty().bind(downloadSongsTask.messageProperty());
                 new Thread(downloadSongsTask).start();
+            }
+        });
+
+        playButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                Button source = (Button) actionEvent.getSource();
+                if (source.getText().equalsIgnoreCase("Play")) {
+                    String artist = artistField.getText();
+                    List<String> titles = trackListView.getSelectionModel().getSelectedItems();
+                    if (titles.size() > 1) {
+                        System.out.println("Select only one track");
+                        return;
+                    }
+
+                    player = new MediaPlayer(new Media(Downloader.downloadUrl(titles.get(0))));
+                    player.play();
+                    source.setText("Stop");
+                } else if (source.getText().equalsIgnoreCase("Stop")) {
+                    player.stop();
+                    source.setText("Play");
+                }
             }
         });
 

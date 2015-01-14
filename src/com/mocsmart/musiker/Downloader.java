@@ -151,31 +151,50 @@ public class Downloader {
         return urlPart.replace(" ", "%20");
     }
 
-    public static void downloadSong(String title, String saveAs)
-    {
+    public static String downloadUrl(String title) {
         String formattedTitle = replacementForUrl(title);
         String urlString = vkApiUrl +
                 "audio.search.xml?" +
                 "q=" + formattedTitle +
                 "&access_token=" + vkAccessToken;
 
+        URL url = null;
+        String urlForSong = null;
         try {
-            URL url = new URL(urlString);
+            url = new URL(urlString);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
 
             InputStream is = connection.getInputStream();
             Document document = builder.parse(is);
             is.close();
-            String downloadUrl = urlFromXML(document);
+            urlForSong = urlFromXML(document);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (ProtocolException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        return urlForSong.replace("\\", "");
+    }
+
+    public static void downloadSong(String title, String saveAs)
+    {
+        try {
+            String downloadUrl = downloadUrl(title);
 
             downloadUrl = downloadUrl.replace("\\", "");
 
-            url = new URL(downloadUrl);
-            connection = (HttpURLConnection) url.openConnection();
+            URL url = new URL(downloadUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
 
-            is = connection.getInputStream();
+            InputStream is = connection.getInputStream();
             OutputStream os = new FileOutputStream(saveAs);
 
             byte[] buffer = new byte[1024];
@@ -196,8 +215,6 @@ public class Downloader {
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (SAXException e) {
             e.printStackTrace();
         }
     }
