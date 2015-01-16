@@ -131,7 +131,7 @@ public class Ui extends Application {
 
         StackPane root = new StackPane();
         root.getChildren().add(browser);
-        authScene = new Scene(root, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+        authScene = new Scene(root/*, DEFAULT_WIDTH, DEFAULT_HEIGHT*/);
 
         webEngine.getLoadWorker().stateProperty().addListener(
                 new ChangeListener<State>() {
@@ -173,188 +173,197 @@ public class Ui extends Application {
 
     private void createMainScene()
     {
-        VBox main = new VBox();
-        HBox middle = new HBox();
-        HBox rbuttons = new HBox();
-        HBox top = new HBox();
-        VBox bottom = new VBox();
+        TabPane tabPane     = new TabPane();
+        Tab mainTab         = new Tab("Main");
+        Tab downloadsTab    = new Tab("Downloads");
+        Tab optionsTab      = new Tab("Options");
+        tabPane.getTabs().addAll(mainTab, downloadsTab, optionsTab);
+        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
-        main.getChildren().add(top);
-        main.getChildren().add(bottom);
+        mainScene = new Scene(tabPane, DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
-        artistField = new TextField("Input artist");
-        Button searchButton = new Button("Search");
-        stateLabel = new Label();
-        top.getChildren().add(artistField);
-        top.getChildren().add(searchButton);
-        top.getChildren().add(stateLabel);
-
-        bottom.getChildren().add(middle);
-        bottom.getChildren().add(rbuttons);
-
-        albumListView = new ListView();
-        albumListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
-        middle.getChildren().add(albumListView);
-
-        trackListView = new ListView();
-        trackListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
-        middle.getChildren().add(trackListView);
-
-        downloadMode = new ToggleGroup();
-        RadioButton downloadTracks = new RadioButton("Tracks");
-        downloadTracks.setSelected(true);
-        downloadTracks.setToggleGroup(downloadMode);
-        downloadTracks.setUserData("Tracks");
-        RadioButton downloadAlbums = new RadioButton("Albums");
-        downloadAlbums.setToggleGroup(downloadMode);
-        downloadAlbums.setUserData("Albums");
-        RadioButton downloadAll = new RadioButton("All");
-        downloadAll.setToggleGroup(downloadMode);
-        downloadAll.setUserData("All");
-
-        Button downloadButton = new Button("Download");
-        Button playButton = new Button("Play");
-        Button pauseButton = new Button("Pause");
-
-        rbuttons.getChildren().add(downloadAlbums);
-        rbuttons.getChildren().add(downloadTracks);
-        rbuttons.getChildren().add(downloadAll);
-        rbuttons.getChildren().add(downloadButton);
-        rbuttons.getChildren().add(playButton);
-        rbuttons.getChildren().add(pauseButton);
-
-        artistField.setOnKeyPressed(new EventHandler<KeyEvent>(){
-            @Override
-            public void handle(KeyEvent ke) {
-                if (ke.getCode().equals(KeyCode.ENTER)) {
-                    search();
-                }
-            }
-        });
-
-        searchButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                search();
-            }
-        });
-
-        albumListView.getSelectionModel().selectedItemProperty()
-                .addListener(new ChangeListener<String>() {
-                    public void changed(ObservableValue<? extends String> observable,
-                                        String oldAlbum, final String newAlbum) {
-                        if (observable.getValue() != null) {
-                            if (cash.containsKey(newAlbum)) {
-                                trackListView.setItems((ObservableList) cash.get(newAlbum));
-                            } else {
-                                final String artist = artistField.getText();
-
-                                final Task<ObservableList<String>> trackListTask = new Task<ObservableList<String>>() {
-                                    @Override
-                                    protected ObservableList<String> call() throws Exception {
-                                        updateMessage("Getting list of tracks...");
-                                        List<String> tracks = Downloader.getTracks(artist, newAlbum);
-                                        updateMessage("Got list of tracks");
-                                        return FXCollections.observableArrayList(tracks);
-                                    }
-                                };
-                                stateLabel.textProperty().bind(trackListTask.messageProperty());
-                                trackListTask.stateProperty().addListener(new ChangeListener<State>() {
-                                    @Override
-                                    public void changed(ObservableValue<? extends State> observableValue, State state, State state2) {
-                                        if (state2 == State.SUCCEEDED) {
-                                            stateLabel.textProperty().unbind();
-                                            ObservableList tracks = trackListTask.getValue();
-                                            trackListView.setItems(tracks);
-                                            cash.put(newAlbum, tracks);
-                                        }
-                                    }
-                                });
-                                new Thread(trackListTask).start();
-                            }
-                        }
-                    }
-                });
-
-        downloadButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                final String artist = artistField.getText();
-                List<String> chosenAlbums = albumListView.getSelectionModel().getSelectedItems();
-                final Map<String, List<String>> albumTracks = new HashMap<String, List<String>>();
-
-                String selectedMode = downloadMode.getSelectedToggle().getUserData().toString();
-                if (selectedMode.equalsIgnoreCase("Tracks")) {
-                    if (chosenAlbums.size() > 1) {
-                        System.out.println("Choose only one album, pls");
-                        return;
-                    } else {
-                        String album = chosenAlbums.get(0);
-                        List<String> titles = trackListView.getSelectionModel().getSelectedItems();
-                        albumTracks.put(album, titles);
-                    }
-                } else if (selectedMode.equalsIgnoreCase("Albums")) {
-                    for (String album : chosenAlbums) {
-                        albumTracks.put(album, cash.get(album));
-                    }
-                } else if (selectedMode.equalsIgnoreCase("All")) {
-                    List<String> albums = albumListView.getItems();
-                    for (String album : albums) {
-                        albumTracks.put(album, cash.get(album));
-                    }
-                }
-
-                DirectoryChooser chooser = new DirectoryChooser();
-                chooser.setTitle("Choose directory to save tracks");
-                if (saveDir != null) {
-                    chooser.setInitialDirectory(new File(saveDir));
-                }
-                final File selectedDirectory = chooser.showDialog(stage);
-                if (selectedDirectory == null) return;
-                saveDir = selectedDirectory.getAbsolutePath() + "/";
-
-                DownloadSongsTask downloadSongsTask = new DownloadSongsTask(artist, albumTracks, saveDir);
-                stateLabel.textProperty().bind(downloadSongsTask.messageProperty());
-                new Thread(downloadSongsTask).start();
-            }
-        });
-
-        playButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                Button source = (Button) actionEvent.getSource();
-                if (source.getText().equalsIgnoreCase("Play")) {
-                    String artist = artistField.getText();
-                    List<String> titles = trackListView.getSelectionModel().getSelectedItems();
-                    if (titles.size() > 1) {
-                        System.out.println("Select only one track");
-                        return;
-                    }
-
-                    player = new MediaPlayer(new Media(Downloader.downloadUrl(artist + " - " + titles.get(0))));
-                    player.play();
-                    source.setText("Stop");
-                } else if (source.getText().equalsIgnoreCase("Stop")) {
-                    player.stop();
-                    source.setText("Play");
-                }
-            }
-        });
-
-        pauseButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                if (player.getStatus().equals(MediaPlayer.Status.PLAYING)) {
-                    player.pause();
-                } else {
-                    player.play();
-                }
-            }
-        });
-
-        mainScene = new Scene(main, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+//        VBox main = new VBox();
+//        HBox middle = new HBox();
+//        HBox rbuttons = new HBox();
+//        HBox top = new HBox();
+//        VBox bottom = new VBox();
+//
+//        main.getChildren().add(top);
+//        main.getChildren().add(bottom);
+//
+//        artistField = new TextField("Input artist");
+//        Button searchButton = new Button("Search");
+//        stateLabel = new Label();
+//        top.getChildren().add(artistField);
+//        top.getChildren().add(searchButton);
+//        top.getChildren().add(stateLabel);
+//
+//        bottom.getChildren().add(middle);
+//        bottom.getChildren().add(rbuttons);
+//
+//        albumListView = new ListView();
+//        albumListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+//
+//        middle.getChildren().add(albumListView);
+//
+//        trackListView = new ListView();
+//        trackListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+//
+//        middle.getChildren().add(trackListView);
+//
+//        downloadMode = new ToggleGroup();
+//        RadioButton downloadTracks = new RadioButton("Tracks");
+//        downloadTracks.setSelected(true);
+//        downloadTracks.setToggleGroup(downloadMode);
+//        downloadTracks.setUserData("Tracks");
+//        RadioButton downloadAlbums = new RadioButton("Albums");
+//        downloadAlbums.setToggleGroup(downloadMode);
+//        downloadAlbums.setUserData("Albums");
+//        RadioButton downloadAll = new RadioButton("All");
+//        downloadAll.setToggleGroup(downloadMode);
+//        downloadAll.setUserData("All");
+//
+//        Button downloadButton = new Button("Download");
+//        Button playButton = new Button("Play");
+//        Button pauseButton = new Button("Pause");
+//
+//        rbuttons.getChildren().add(downloadAlbums);
+//        rbuttons.getChildren().add(downloadTracks);
+//        rbuttons.getChildren().add(downloadAll);
+//        rbuttons.getChildren().add(downloadButton);
+//        rbuttons.getChildren().add(playButton);
+//        rbuttons.getChildren().add(pauseButton);
+//
+//        artistField.setOnKeyPressed(new EventHandler<KeyEvent>(){
+//            @Override
+//            public void handle(KeyEvent ke) {
+//                if (ke.getCode().equals(KeyCode.ENTER)) {
+//                    search();
+//                }
+//            }
+//        });
+//
+//        searchButton.setOnAction(new EventHandler<ActionEvent>() {
+//            @Override
+//            public void handle(ActionEvent event) {
+//                search();
+//            }
+//        });
+//
+//        albumListView.getSelectionModel().selectedItemProperty()
+//                .addListener(new ChangeListener<String>() {
+//                    public void changed(ObservableValue<? extends String> observable,
+//                                        String oldAlbum, final String newAlbum) {
+//                        if (observable.getValue() != null) {
+//                            if (cash.containsKey(newAlbum)) {
+//                                trackListView.setItems((ObservableList) cash.get(newAlbum));
+//                            } else {
+//                                final String artist = artistField.getText();
+//
+//                                final Task<ObservableList<String>> trackListTask = new Task<ObservableList<String>>() {
+//                                    @Override
+//                                    protected ObservableList<String> call() throws Exception {
+//                                        updateMessage("Getting list of tracks...");
+//                                        List<String> tracks = Downloader.getTracks(artist, newAlbum);
+//                                        updateMessage("Got list of tracks");
+//                                        return FXCollections.observableArrayList(tracks);
+//                                    }
+//                                };
+//                                stateLabel.textProperty().bind(trackListTask.messageProperty());
+//                                trackListTask.stateProperty().addListener(new ChangeListener<State>() {
+//                                    @Override
+//                                    public void changed(ObservableValue<? extends State> observableValue, State state, State state2) {
+//                                        if (state2 == State.SUCCEEDED) {
+//                                            stateLabel.textProperty().unbind();
+//                                            ObservableList tracks = trackListTask.getValue();
+//                                            trackListView.setItems(tracks);
+//                                            cash.put(newAlbum, tracks);
+//                                        }
+//                                    }
+//                                });
+//                                new Thread(trackListTask).start();
+//                            }
+//                        }
+//                    }
+//                });
+//
+//        downloadButton.setOnAction(new EventHandler<ActionEvent>() {
+//            @Override
+//            public void handle(ActionEvent actionEvent) {
+//                final String artist = artistField.getText();
+//                List<String> chosenAlbums = albumListView.getSelectionModel().getSelectedItems();
+//                final Map<String, List<String>> albumTracks = new HashMap<String, List<String>>();
+//
+//                String selectedMode = downloadMode.getSelectedToggle().getUserData().toString();
+//                if (selectedMode.equalsIgnoreCase("Tracks")) {
+//                    if (chosenAlbums.size() > 1) {
+//                        System.out.println("Choose only one album, pls");
+//                        return;
+//                    } else {
+//                        String album = chosenAlbums.get(0);
+//                        List<String> titles = trackListView.getSelectionModel().getSelectedItems();
+//                        albumTracks.put(album, titles);
+//                    }
+//                } else if (selectedMode.equalsIgnoreCase("Albums")) {
+//                    for (String album : chosenAlbums) {
+//                        albumTracks.put(album, cash.get(album));
+//                    }
+//                } else if (selectedMode.equalsIgnoreCase("All")) {
+//                    List<String> albums = albumListView.getItems();
+//                    for (String album : albums) {
+//                        albumTracks.put(album, cash.get(album));
+//                    }
+//                }
+//
+//                DirectoryChooser chooser = new DirectoryChooser();
+//                chooser.setTitle("Choose directory to save tracks");
+//                if (saveDir != null) {
+//                    chooser.setInitialDirectory(new File(saveDir));
+//                }
+//                final File selectedDirectory = chooser.showDialog(stage);
+//                if (selectedDirectory == null) return;
+//                saveDir = selectedDirectory.getAbsolutePath() + "/";
+//
+//                DownloadSongsTask downloadSongsTask = new DownloadSongsTask(artist, albumTracks, saveDir);
+//                stateLabel.textProperty().bind(downloadSongsTask.messageProperty());
+//                new Thread(downloadSongsTask).start();
+//            }
+//        });
+//
+//        playButton.setOnAction(new EventHandler<ActionEvent>() {
+//            @Override
+//            public void handle(ActionEvent actionEvent) {
+//                Button source = (Button) actionEvent.getSource();
+//                if (source.getText().equalsIgnoreCase("Play")) {
+//                    String artist = artistField.getText();
+//                    List<String> titles = trackListView.getSelectionModel().getSelectedItems();
+//                    if (titles.size() > 1) {
+//                        System.out.println("Select only one track");
+//                        return;
+//                    }
+//
+//                    player = new MediaPlayer(new Media(Downloader.downloadUrl(artist + " - " + titles.get(0))));
+//                    player.play();
+//                    source.setText("Stop");
+//                } else if (source.getText().equalsIgnoreCase("Stop")) {
+//                    player.stop();
+//                    source.setText("Play");
+//                }
+//            }
+//        });
+//
+//        pauseButton.setOnAction(new EventHandler<ActionEvent>() {
+//            @Override
+//            public void handle(ActionEvent actionEvent) {
+//                if (player.getStatus().equals(MediaPlayer.Status.PLAYING)) {
+//                    player.pause();
+//                } else {
+//                    player.play();
+//                }
+//            }
+//        });
+//
+//        mainScene = new Scene(main, DEFAULT_WIDTH, DEFAULT_HEIGHT);
     }
 
     private void search()
