@@ -1,6 +1,7 @@
 package com.mocsmart.musiker;
 
 import javafx.application.Application;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -9,6 +10,7 @@ import javafx.concurrent.Task;
 import javafx.concurrent.Worker.State;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -30,6 +32,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
+import static javafx.beans.binding.Bindings.equal;
+
 public class Ui extends Application {
     private Stage stage;
     private Scene authScene;
@@ -37,9 +41,15 @@ public class Ui extends Application {
     private TextField searchField;
     private Label stateLabel;
     private ComboBox searchMode;
+    private Button downloadButton;
     private ListView albumListView;
     private ListView trackListView;
     private WebEngine webEngine;
+
+    private Label titleLabel;
+    private ProgressBar progressBar;
+    private Slider volumeBar;
+    private Label volumeLabel;
 
     private Properties props;
     private final String accessGrantedPropertyName = "ACCESS_GRANTED";
@@ -184,12 +194,6 @@ public class Ui extends Application {
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
         mainScene = new Scene(tabPane, DEFAULT_WIDTH, DEFAULT_HEIGHT);
-        mainScene.widthProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> observableValue, Number number, Number number2) {
-                searchField.setPrefWidth(albumListView.getWidth());
-            }
-        });
     }
 
     private Node createMainTabContent() {
@@ -255,8 +259,16 @@ public class Ui extends Application {
         progressVBox.getChildren().addAll(titleHBox, progressBar);
 
         VBox volumeVBox = new VBox();
-        Label volumeLabel = new Label("100%");
-        Slider volumeBar = new Slider();
+        volumeBar = new Slider(0, 100, 100);
+        volumeLabel = new Label("100%");
+        volumeLabel.setAlignment(Pos.CENTER);
+        volumeBar.valueProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observableValue, Number number, Number number2) {
+                volumeLabel.setText(String.valueOf(number2.intValue()) + "%");
+                player.setVolume(number2.doubleValue() / 100.0);
+            }
+        });
         volumeVBox.getChildren().addAll(volumeLabel, volumeBar);
 
         playerHBox.getChildren().addAll(playButton, pauseButton, progressVBox, volumeVBox);
@@ -285,7 +297,7 @@ public class Ui extends Application {
         searchMode = new ComboBox(FXCollections.observableArrayList("Artist", "Track"));
         searchMode.getSelectionModel().selectFirst();
 
-        Button downloadButton = new Button("Download");
+        downloadButton = new Button("Download");
         downloadButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
