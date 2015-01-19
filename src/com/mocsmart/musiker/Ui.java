@@ -10,6 +10,7 @@ import javafx.concurrent.Task;
 import javafx.concurrent.Worker.State;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -32,7 +33,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
-import static javafx.beans.binding.Bindings.equal;
 
 public class Ui extends Application {
     private Stage stage;
@@ -187,7 +187,11 @@ public class Ui extends Application {
     {
         TabPane tabPane     = new TabPane();
         Tab mainTab         = new Tab("Main");
-        mainTab.setContent(createMainTabContent());
+        try {
+            mainTab.setContent((Node) FXMLLoader.load(getClass().getResource("main.fxml")));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         Tab downloadsTab    = new Tab("Downloads");
         Tab optionsTab      = new Tab("Options");
         tabPane.getTabs().addAll(mainTab, downloadsTab, optionsTab);
@@ -196,233 +200,5 @@ public class Ui extends Application {
         mainScene = new Scene(tabPane, DEFAULT_WIDTH, DEFAULT_HEIGHT);
     }
 
-    private Node createMainTabContent() {
-        BorderPane border = new BorderPane();
-
-        HBox playerHBox = createPlayerHBox();
-        VBox centerVBox = createCenterVBox();
-
-        border.setTop(playerHBox);
-        border.setCenter(centerVBox);
-        stateLabel = new Label();
-        border.setBottom(stateLabel);
-        return border;
-    }
-
-    private HBox createPlayerHBox() {
-        HBox playerHBox = new HBox();
-
-        Button playButton = new Button("Play");
-        playButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                Button source = (Button) actionEvent.getSource();
-                if (source.getText().equalsIgnoreCase("Play")) {
-                    String artist = searchField.getText();
-                    List<String> titles = trackListView.getSelectionModel().getSelectedItems();
-                    if (titles.size() > 1) {
-                        System.out.println("Select only one track");
-                        return;
-                    }
-
-                    player = new MediaPlayer(new Media(Downloader.downloadUrl(artist + " - " + titles.get(0))));
-                    player.play();
-                    source.setText("Stop");
-                } else if (source.getText().equalsIgnoreCase("Stop")) {
-                    player.stop();
-                    source.setText("Play");
-                }
-            }
-        });
-
-        Button pauseButton = new Button("Pause");
-        pauseButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                if (player.getStatus().equals(MediaPlayer.Status.PLAYING)) {
-                    player.pause();
-                } else {
-                    player.play();
-                }
-            }
-        });
-
-        HBox titleHBox = new HBox();
-
-        Label titleLabel = new Label("Title");
-        Label timeLeftLabel = new Label("-0:00");
-
-        titleHBox.getChildren().addAll(titleLabel, timeLeftLabel);
-        ProgressBar progressBar = new ProgressBar();
-
-        VBox progressVBox = new VBox();
-        progressVBox.getChildren().addAll(titleHBox, progressBar);
-
-        VBox volumeVBox = new VBox();
-        volumeBar = new Slider(0, 100, 100);
-        volumeLabel = new Label("100%");
-        volumeLabel.setAlignment(Pos.CENTER);
-        volumeBar.valueProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> observableValue, Number number, Number number2) {
-                volumeLabel.setText(String.valueOf(number2.intValue()) + "%");
-                player.setVolume(number2.doubleValue() / 100.0);
-            }
-        });
-        volumeVBox.getChildren().addAll(volumeLabel, volumeBar);
-
-        playerHBox.getChildren().addAll(playButton, pauseButton, progressVBox, volumeVBox);
-        return playerHBox;
-    }
-
-    private VBox createCenterVBox() {
-        VBox center = new VBox();
-        center.getChildren().addAll(createSearchHBox(), createResultHBox());
-        return center;
-    }
-
-    private HBox createSearchHBox() {
-        HBox retval = new HBox();
-
-        searchField = new TextField("Input artist");
-        searchField.setOnKeyPressed(new EventHandler<KeyEvent>(){
-            @Override
-            public void handle(KeyEvent ke) {
-                if (ke.getCode().equals(KeyCode.ENTER)) {
-                    search();
-                }
-            }
-        });
-
-        searchMode = new ComboBox(FXCollections.observableArrayList("Artist", "Track"));
-        searchMode.getSelectionModel().selectFirst();
-
-        downloadButton = new Button("Download");
-        downloadButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                final String artist = searchField.getText();
-                List<String> chosenAlbums = albumListView.getSelectionModel().getSelectedItems();
-                final Map<String, List<String>> albumTracks = new HashMap<String, List<String>>();
-
-                String selectedMode = (String) searchMode.getSelectionModel().getSelectedItem();
-                if (selectedMode.equalsIgnoreCase("Track")) {
-                    if (chosenAlbums.size() > 1) {
-                        System.out.println("Choose only one album, please");
-                        return;
-                    } else {
-                        String album = chosenAlbums.get(0);
-                        List<String> titles = trackListView.getSelectionModel().getSelectedItems();
-                        albumTracks.put(album, titles);
-                    }
-                } else if (selectedMode.equalsIgnoreCase("Album")) {
-                    for (String album : chosenAlbums) {
-                        albumTracks.put(album, cache.get(album));
-                    }
-                }
-
-                DirectoryChooser chooser = new DirectoryChooser();
-                chooser.setTitle("Choose directory to save tracks");
-                if (saveDir != null) {
-                    chooser.setInitialDirectory(new File(saveDir));
-                }
-                final File selectedDirectory = chooser.showDialog(stage);
-                if (selectedDirectory == null) return;
-                saveDir = selectedDirectory.getAbsolutePath() + "/";
-
-                DownloadSongsTask downloadSongsTask = new DownloadSongsTask(artist, albumTracks, saveDir);
-                stateLabel.textProperty().bind(downloadSongsTask.messageProperty());
-                new Thread(downloadSongsTask).start();
-            }
-        });
-
-        retval.getChildren().addAll(searchField, searchMode, downloadButton);
-        return retval;
-    }
-
-    private HBox createResultHBox() {
-        HBox result = new HBox();
-
-        VBox albumVBox = new VBox();
-        Label albumLabel = new Label("Albums");
-        albumListView = new ListView();
-        albumListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        albumListView.getSelectionModel().selectedItemProperty()
-                .addListener(new ChangeListener<String>() {
-                    public void changed(ObservableValue<? extends String> observable,
-                                        String oldAlbum, final String newAlbum) {
-                        if (observable.getValue() != null) {
-                            if (cache.containsKey(newAlbum)) {
-                                trackListView.setItems((ObservableList) cache.get(newAlbum));
-                            } else {
-                                final String artist = searchField.getText();
-
-                                final Task<ObservableList<String>> trackListTask = new Task<ObservableList<String>>() {
-                                    @Override
-                                    protected ObservableList<String> call() throws Exception {
-                                        updateMessage("Getting list of tracks...");
-                                        List<String> tracks = Downloader.getTracks(artist, newAlbum);
-                                        updateMessage("Got list of tracks");
-                                        return FXCollections.observableArrayList(tracks);
-                                    }
-                                };
-                                stateLabel.textProperty().bind(trackListTask.messageProperty());
-                                trackListTask.stateProperty().addListener(new ChangeListener<State>() {
-                                    @Override
-                                    public void changed(ObservableValue<? extends State> observableValue, State state, State state2) {
-                                        if (state2 == State.SUCCEEDED) {
-                                            stateLabel.textProperty().unbind();
-                                            ObservableList tracks = trackListTask.getValue();
-                                            trackListView.setItems(tracks);
-                                            cache.put(newAlbum, tracks);
-                                        }
-                                    }
-                                });
-                                new Thread(trackListTask).start();
-                            }
-                        }
-                    }
-                });
-        albumVBox.getChildren().addAll(albumLabel, albumListView);
-
-        VBox trackVBox = new VBox();
-        Label trackLabel = new Label("Tracks");
-        trackListView = new ListView();
-        trackListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        trackVBox.getChildren().addAll(trackLabel, trackListView);
-
-        result.getChildren().addAll(albumVBox, trackVBox);
-        return result;
-    }
-
-    private void search()
-    {
-        albumListView.setItems(null);
-        trackListView.setItems(null);
-
-        final String artist = searchField.getText();
-
-        final Task<ObservableList<String>> albumListTask = new Task<ObservableList<String>>() {
-            @Override
-            protected ObservableList<String> call() throws Exception {
-                updateMessage("Getting list of albums...");
-                List<String> albums = Downloader.getAlbums(artist);
-                updateMessage("Got list of albums");
-                return FXCollections.observableArrayList(albums);
-            }
-        };
-        stateLabel.textProperty().bind(albumListTask.messageProperty());
-        albumListTask.stateProperty().addListener(new ChangeListener<State>() {
-            @Override
-            public void changed(ObservableValue<? extends State> observableValue, State state, State state2) {
-                if (state2 == State.SUCCEEDED) {
-                    stateLabel.textProperty().unbind();
-                    albumListView.setItems(albumListTask.getValue());
-                    cache.clear();
-                }
-            }
-        });
-        new Thread(albumListTask).start();
-    }
 }
 
