@@ -15,6 +15,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.stage.DirectoryChooser;
+import javafx.util.Duration;
 
 import java.io.File;
 import java.net.URL;
@@ -22,6 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+
+import static java.lang.Math.abs;
 
 public class MainController implements Initializable {
     @FXML
@@ -141,7 +144,28 @@ public class MainController implements Initializable {
                 return;
             }
 
-            player = new MediaPlayer(new Media(Downloader.downloadUrl(artist + " - " + titles.get(0))));
+            String title = artist + " - " + titles.get(0);
+            player = new MediaPlayer(new Media(Downloader.downloadUrl(title)));
+
+            titleLabel.setText(title);
+            player.currentTimeProperty().addListener(new ChangeListener<Duration>() {
+                @Override
+                public void changed(ObservableValue<? extends Duration> observableValue, Duration duration, Duration duration2) {
+                    Duration total = player.getTotalDuration();
+                    Duration left = duration2.subtract(total);
+
+                    double progress = duration2.toMillis() / total.toMillis();
+                    progressBar.setProgress(progress);
+
+                    int secs = (int) left.toSeconds();
+                    int mins = secs / 60;
+                    secs %= 60;
+                    secs = abs(secs);
+                    String minus = (duration2.lessThan(total) && mins == 0) ? "-" : "";
+                    String zero = (secs < 10) ? "0" : "";
+                    timeLeftLabel.setText(minus + mins + ":" + zero + secs);
+                }
+            });
             player.play();
             playButton.setText("Stop");
         } else if (playButton.getText().equalsIgnoreCase("Stop")) {
