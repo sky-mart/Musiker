@@ -28,39 +28,39 @@ import static java.lang.Math.abs;
 
 public class MainController implements Initializable {
     @FXML
-    Parent root;
+    private Parent root;
 
     @FXML
-    Button playButton;
+    private Button playButton;
     @FXML
-    Button pauseButton;
+    private Button pauseButton;
     @FXML
-    Label titleLabel;
+    private Label titleLabel;
     @FXML
-    Label timeLeftLabel;
+    private Label timeLeftLabel;
     @FXML
-    ProgressBar progressBar;
+    private ProgressBar progressBar;
     @FXML
-    Label volumeLabel;
+    private Label volumeLabel;
     @FXML
-    Slider volumeBar;
+    private Slider volumeBar;
 
     @FXML
-    TextField searchField;
+    private TextField searchField;
     @FXML
-    ComboBox<String> searchModeCombo;
+    private ComboBox<String> searchModeCombo;
     @FXML
-    Button downloadButton;
+    private Button downloadButton;
     @FXML
-    ComboBox<String> downloadModeCombo;
+    private ComboBox<String> downloadModeCombo;
 
     @FXML
-    ListView albumListView;
+    private ListView albumListView;
     @FXML
-    ListView trackListView;
+    private ListView trackListView;
 
     @FXML
-    Label stateLabel;
+    private Label stateLabel;
 
     private MediaPlayer player;
     private Map<String, List<String>> cache = new HashMap<String, List<String>>(); // key - album name, value - list of tracks
@@ -136,7 +136,7 @@ public class MainController implements Initializable {
 
     @FXML
     private void play() {
-        if (playButton.getText().equalsIgnoreCase("Play")) {
+        if (player == null) {
             String artist = searchField.getText();
             List<String> titles = trackListView.getSelectionModel().getSelectedItems();
             if (titles.size() > 1) {
@@ -167,10 +167,13 @@ public class MainController implements Initializable {
                 }
             });
             player.play();
-            playButton.setText("Stop");
-        } else if (playButton.getText().equalsIgnoreCase("Stop")) {
+            playButton.getStyleClass().clear();
+            playButton.getStyleClass().add("stopbutton");
+        } else {
             player.stop();
-            playButton.setText("Play");
+            player = null;
+            playButton.getStyleClass().clear();
+            playButton.getStyleClass().add("playbutton");
         }
     }
 

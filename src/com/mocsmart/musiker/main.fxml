@@ -9,24 +9,24 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 
-<BorderPane fx:id="root" prefHeight="395.0" prefWidth="538.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mocsmart.musiker.MainController">
+<BorderPane fx:id="root" prefHeight="395.0" prefWidth="538.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mocsmart.musiker.MainController">
    <top>
       <HBox BorderPane.alignment="CENTER">
          <children>
             <HBox>
                <children>
-                  <Button fx:id="playButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#play" text="Play">
+                  <Button fx:id="playButton" contentDisplay="GRAPHIC_ONLY" minWidth="-Infinity" mnemonicParsing="false" onAction="#play" prefHeight="26.0" prefWidth="26.0" styleClass="play">
                      <HBox.margin>
                         <Insets right="8.0" />
                      </HBox.margin>
                   </Button>
-                  <Button fx:id="pauseButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#pause" text="Pause" />
+                  <Button fx:id="pauseButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#pause" prefHeight="26.0" prefWidth="26.0" styleClass="pause" />
                </children>
                <padding>
                   <Insets top="7.0" />
                </padding>
                <HBox.margin>
-                  <Insets bottom="10.0" left="15.0" top="20.0" />
+                  <Insets bottom="10.0" left="15.0" top="15.0" />
                </HBox.margin>
             </HBox>
             <VBox fx:id="progressVBox" HBox.hgrow="ALWAYS">
@@ -55,7 +55,7 @@
                   </HBox>
                   <AnchorPane>
                      <children>
-                        <ProgressBar fx:id="progressBar" progress="0.0" style="-fx-padding: 1px; -fx-background-insets: 0;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" />
+                        <ProgressBar fx:id="progressBar" layoutY="3.0" progress="0.0" style="-fx-padding: 1px; -fx-background-insets: 0;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" />
                      </children>
                   </AnchorPane>
                </children>

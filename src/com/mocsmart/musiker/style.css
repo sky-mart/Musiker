@@ -1,0 +1,20 @@
+.button {
+    -fx-background-size: 26 26;
+}
+
+.play {
+    -fx-background-image: url(images/play.png);
+}
+
+.pause {
+    -fx-background-image: url(images/pause.png);
+}
+
+.stop {
+    -fx-background-image: url(images/stop.png);
+}
+
+.progress-bar .bar {
+    -fx-padding:4px;
+    -fx-background-insets:0;
+}

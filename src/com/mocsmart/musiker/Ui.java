@@ -1,55 +1,35 @@
 package com.mocsmart.musiker;
 
+import com.sun.javafx.css.StyleManager;
 import javafx.application.Application;
-import javafx.beans.binding.BooleanBinding;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
 import javafx.concurrent.Worker.State;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
-import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 
 public class Ui extends Application {
     private Stage stage;
     private Scene authScene;
     private Scene mainScene;
-    private TextField searchField;
-    private Label stateLabel;
-    private ComboBox searchMode;
-    private Button downloadButton;
-    private ListView albumListView;
-    private ListView trackListView;
     private WebEngine webEngine;
 
-    private Label titleLabel;
-    private ProgressBar progressBar;
-    private Slider volumeBar;
-    private Label volumeLabel;
 
     private Properties props;
     private final String accessGrantedPropertyName = "ACCESS_GRANTED";
@@ -58,13 +38,10 @@ public class Ui extends Application {
     private final String defaultHeightPropertyName = "DEFAULT_HEIGHT";
     private final String defaultDirectoryPropertyName = "DEFAULT_DIR";
 
-    private int DEFAULT_WIDTH = 500;
-    private int DEFAULT_HEIGHT = 400;
+    private int DEFAULT_WIDTH = 600;
+    private int DEFAULT_HEIGHT = 500;
     private String saveDir;
 
-    private Map<String, List<String>> cache = new HashMap<String, List<String>>(); // key - album name, value - list of tracks
-
-    private MediaPlayer player;
 
     public static void main(String[] args) {
         launch(args);
@@ -194,9 +171,12 @@ public class Ui extends Application {
         }
         Tab downloadsTab    = new Tab("Downloads");
         Tab optionsTab      = new Tab("Options");
+
         tabPane.getTabs().addAll(mainTab, downloadsTab, optionsTab);
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+        tabPane.setTabMinWidth(80);
 
+        //tabPane.getStylesheets().add(this.getClass().getResource("style.css").toExternalForm());
         mainScene = new Scene(tabPane, DEFAULT_WIDTH, DEFAULT_HEIGHT);
     }
 
