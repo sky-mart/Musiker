@@ -14,7 +14,54 @@
     -fx-background-image: url(images/stop.png);
 }
 
+.download {
+    -fx-background-image: url(images/download.png);
+}
+
+.title {
+    -fx-text-fill: #2B587A;
+}
+
+.time-left {
+    -fx-text-fill: #627a94;
+}
+
 .progress-bar .bar {
-    -fx-padding:4px;
-    -fx-background-insets:0;
+    -fx-padding: 4px;
+    -fx-background-color: #6383a8;
+    -fx-background-insets: 0 0 1 0;
+}
+
+.progress-bar .track {
+    -fx-padding: 4px;
+}
+
+.searchField {
+    -fx-background-image: url('images/magglass.png');
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: right 6 center;
+    -fx-background-size: 16 16;
+}
+
+.combo-box {
+    -fx-background-color: #6383a8;
+    -fx-background-insets: 0;
+}
+
+.combo-box .arrow-button .arrow {
+    -fx-background-color: white;
+}
+
+.combo-box-popup .list-view .list-cell {
+    -fx-background-color: white;
+    -fx-text-fill: #6383a8;
+}
+
+.combo-box .cell {
+    -fx-text-fill: white;
+}
+
+.slider .track {
+    -fx-background-color: #6383a8;
+    -fx-background-insets: 0 0 1 0;
 }

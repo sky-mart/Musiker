@@ -38,8 +38,8 @@ public class Ui extends Application {
     private final String defaultHeightPropertyName = "DEFAULT_HEIGHT";
     private final String defaultDirectoryPropertyName = "DEFAULT_DIR";
 
-    private int DEFAULT_WIDTH = 600;
-    private int DEFAULT_HEIGHT = 500;
+    private int DEFAULT_WIDTH = 700;
+    private int DEFAULT_HEIGHT = 400;
     private String saveDir;
 
 
@@ -120,7 +120,7 @@ public class Ui extends Application {
 
         StackPane root = new StackPane();
         root.getChildren().add(browser);
-        authScene = new Scene(root/*, DEFAULT_WIDTH, DEFAULT_HEIGHT*/);
+        authScene = new Scene(root, DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
         webEngine.getLoadWorker().stateProperty().addListener(
                 new ChangeListener<State>() {

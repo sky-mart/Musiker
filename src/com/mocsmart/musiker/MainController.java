@@ -167,18 +167,19 @@ public class MainController implements Initializable {
                 }
             });
             player.play();
-            playButton.getStyleClass().clear();
-            playButton.getStyleClass().add("stopbutton");
+            playButton.getStyleClass().remove("play");
+            playButton.getStyleClass().add("stop");
         } else {
             player.stop();
             player = null;
-            playButton.getStyleClass().clear();
-            playButton.getStyleClass().add("playbutton");
+            playButton.getStyleClass().remove("stop");
+            playButton.getStyleClass().add("play");
         }
     }
 
     @FXML
     private void pause() {
+        if (player == null) return;
         if (player.getStatus().equals(MediaPlayer.Status.PLAYING)) {
             player.pause();
         } else {
