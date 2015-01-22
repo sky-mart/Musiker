@@ -101,7 +101,7 @@
                   <Insets bottom="10.0" />
                </VBox.margin>
             </HBox>
-            <SplitPane dividerPositions="0.5" VBox.vgrow="ALWAYS">
+            <SplitPane fx:id="resultPane" dividerPositions="0.5" VBox.vgrow="ALWAYS">
               <items>
                 <AnchorPane minHeight="0.0" minWidth="0.0">
                      <children>

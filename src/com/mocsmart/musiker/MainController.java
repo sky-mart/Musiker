@@ -20,10 +20,7 @@ import javafx.util.Duration;
 
 import java.io.File;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 
 import static java.lang.Math.abs;
 
@@ -56,6 +53,8 @@ public class MainController implements Initializable {
     private ComboBox<String> downloadModeCombo;
 
     @FXML
+    private SplitPane resultPane;
+    @FXML
     private ListView albumListView;
     @FXML
     private ListView trackListView;
@@ -65,7 +64,8 @@ public class MainController implements Initializable {
 
     private MediaPlayer player;
     private ChangeListener currentTimeListener;
-    private Map<String, List<String>> cache = new HashMap<String, List<String>>(); // key - album name, value - list of tracks
+    private Map<String, List<String>> albumTracksCache = new HashMap<String, List<String>>(); // key - album name, value - list of tracks
+    private Map<String, String> tracksUrlsCache = new HashMap<>();
     private String saveDir;
     private String searchMode = "Artist";
     private String downloadMode = "Tracks";
@@ -78,8 +78,8 @@ public class MainController implements Initializable {
                     public void changed(ObservableValue<? extends String> observable,
                                         String oldAlbum, final String newAlbum) {
                         if (observable.getValue() != null) {
-                            if (cache.containsKey(newAlbum)) {
-                                trackListView.setItems((ObservableList) cache.get(newAlbum));
+                            if (albumTracksCache.containsKey(newAlbum)) {
+                                trackListView.setItems((ObservableList) albumTracksCache.get(newAlbum));
                             } else {
                                 final String artist = searchField.getText();
 
@@ -100,7 +100,7 @@ public class MainController implements Initializable {
                                             stateLabel.textProperty().unbind();
                                             ObservableList tracks = trackListTask.getValue();
                                             trackListView.setItems(tracks);
-                                            cache.put(newAlbum, tracks);
+                                            albumTracksCache.put(newAlbum, tracks);
                                         }
                                     }
                                 });
@@ -119,7 +119,7 @@ public class MainController implements Initializable {
             }
         });
 
-        searchModeCombo.setItems(FXCollections.observableArrayList("Artist", "Tracks"));
+        searchModeCombo.setItems(FXCollections.observableArrayList("Artist", "Track"));
         searchModeCombo.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observableValue, String s, String s2) {
@@ -165,15 +165,20 @@ public class MainController implements Initializable {
     @FXML
     private void play() {
         if (player == null) {
-            String artist = searchField.getText();
             List<String> titles = trackListView.getSelectionModel().getSelectedItems();
             if (titles.size() > 1) {
-                System.out.println("Select only one track");
+                stateLabel.setText("Select only one track");
                 return;
             }
-
-            String title = artist + " - " + titles.get(0);
-            player = new MediaPlayer(new Media(Downloader.downloadUrl(title)));
+            String title;
+            if (searchMode.equals("Artist")) {
+                String artist = searchField.getText();
+                title = artist + " - " + titles.get(0);
+                player = new MediaPlayer(new Media(Downloader.downloadUrl(title)));
+            } else {
+                title = titles.get(0);
+                player = new MediaPlayer(new Media(tracksUrlsCache.get(title)));
+            }
 
             titleLabel.setText(title);
             player.currentTimeProperty().addListener(currentTimeListener);
@@ -200,8 +205,7 @@ public class MainController implements Initializable {
     }
 
     @FXML
-    private void search(KeyEvent ke)
-    {
+    private void search(KeyEvent ke) {
         if (!ke.getCode().equals(KeyCode.ENTER)) return;
 
         albumListView.setItems(null);
@@ -226,25 +230,89 @@ public class MainController implements Initializable {
                     if (state2 == Worker.State.SUCCEEDED) {
                         stateLabel.textProperty().unbind();
                         albumListView.setItems(albumListTask.getValue());
-                        cache.clear();
+                        albumTracksCache.clear();
                     }
                 }
             });
             new Thread(albumListTask).start();
         } else if (searchMode.equalsIgnoreCase("Track")) {
+            resultPane.setDividerPosition(0, 0);
+            if (tracksUrlsCache != null) {
+                tracksUrlsCache.clear();
+            }
 
+            final String title = searchField.getText();
+
+            final Task<ObservableList<String>> trackListTask = new Task<ObservableList<String>>() {
+                @Override
+                protected ObservableList<String> call() throws Exception {
+                    updateMessage("Getting list of tracks...");
+                    tracksUrlsCache = Downloader.getAllUrls(title);
+                    updateMessage("Got list of tracks");
+                    return FXCollections.observableArrayList(tracksUrlsCache.keySet());
+                }
+            };
+            stateLabel.textProperty().bind(trackListTask.messageProperty());
+            trackListTask.stateProperty().addListener(new ChangeListener<Worker.State>() {
+                @Override
+                public void changed(ObservableValue<? extends Worker.State> observableValue, Worker.State state, Worker.State state2) {
+                    if (state2 == Worker.State.SUCCEEDED) {
+                        stateLabel.textProperty().unbind();
+                        trackListView.setItems(trackListTask.getValue());
+                    }
+                }
+            });
+            new Thread(trackListTask).start();
         }
     }
 
     @FXML
     private void download() {
+        if (searchMode.equals("Artist")) {
+            downloadByArtist();
+        } else if (searchMode.equals("Track") && downloadMode.equals("Tracks")) {
+            simpleDownload();
+        }
+
+    }
+
+    private void simpleDownload() {
+        List<String> titles = trackListView.getSelectionModel().getSelectedItems();
+        List<String> urls = new ArrayList<>();
+        for (String title : titles) {
+            urls.add(tracksUrlsCache.get(title));
+        }
+
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle("Choose directory to save tracks");
+        if (saveDir != null) {
+            chooser.setInitialDirectory(new File(saveDir));
+        }
+        final File selectedDirectory = chooser.showDialog(root.getScene().getWindow());
+        if (selectedDirectory == null) return;
+        saveDir = selectedDirectory.getAbsolutePath() + "/";
+
+        SimpleDownloadTask downloadSongsTask = new SimpleDownloadTask(titles, urls, saveDir);
+        stateLabel.textProperty().bind(downloadSongsTask.messageProperty());
+        downloadSongsTask.stateProperty().addListener(new ChangeListener<Worker.State>() {
+            @Override
+            public void changed(ObservableValue<? extends Worker.State> observableValue, Worker.State state, Worker.State state2) {
+                if (state2 == Worker.State.SUCCEEDED) {
+                    stateLabel.textProperty().unbind();
+                }
+            }
+        });
+        new Thread(downloadSongsTask).start();
+    }
+
+    private void downloadByArtist() {
         final String artist = searchField.getText();
         List<String> chosenAlbums = albumListView.getSelectionModel().getSelectedItems();
         final Map<String, List<String>> albumTracks = new HashMap<String, List<String>>();
 
         if (downloadMode.equalsIgnoreCase("Tracks")) {
             if (chosenAlbums.size() > 1) {
-                System.out.println("Choose only one album, please");
+                stateLabel.setText("Choose only one album, please");
                 return;
             } else {
                 String album = chosenAlbums.get(0);
@@ -253,7 +321,7 @@ public class MainController implements Initializable {
             }
         } else if (downloadMode.equalsIgnoreCase("Albums")) {
             for (String album : chosenAlbums) {
-                albumTracks.put(album, cache.get(album));
+                albumTracks.put(album, albumTracksCache.get(album));
             }
         }
 
@@ -268,6 +336,14 @@ public class MainController implements Initializable {
 
         DownloadSongsTask downloadSongsTask = new DownloadSongsTask(artist, albumTracks, saveDir);
         stateLabel.textProperty().bind(downloadSongsTask.messageProperty());
+        downloadSongsTask.stateProperty().addListener(new ChangeListener<Worker.State>() {
+            @Override
+            public void changed(ObservableValue<? extends Worker.State> observableValue, Worker.State state, Worker.State state2) {
+                if (state2 == Worker.State.SUCCEEDED) {
+                    stateLabel.textProperty().unbind();
+                }
+            }
+        });
         new Thread(downloadSongsTask).start();
     }
 }

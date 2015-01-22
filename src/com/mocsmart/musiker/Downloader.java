@@ -1,6 +1,5 @@
 package com.mocsmart.musiker;
 
-import com.mpatric.mp3agic.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -17,6 +16,7 @@ import javax.xml.xpath.XPathFactory;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -151,6 +151,10 @@ public class Downloader {
     }
 
     public static String downloadUrl(String title) {
+        return getFirstUrl(getVkSongDocument(title));
+    }
+
+    private static Document getVkSongDocument(String title) {
         String formattedTitle = null;
         try {
             formattedTitle = URLEncoder.encode(title, "UTF-8");
@@ -163,35 +167,33 @@ public class Downloader {
                 "&access_token=" + vkAccessToken;
 
         URL url = null;
-        String urlForSong = null;
+        Document document = null;
         try {
             url = new URL(urlString);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
 
             InputStream is = connection.getInputStream();
-            Document document = builder.parse(is);
+            document = builder.parse(is);
             is.close();
-            urlForSong = urlFromXML(document);
+        } catch (SAXException e) {
+            e.printStackTrace();
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (ProtocolException e) {
             e.printStackTrace();
-        } catch (SAXException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
-        return urlForSong.replace("\\", "");
+        return document;
     }
 
-    public static void downloadSong(String title, String saveAs)
-    {
-        try {
-            String downloadUrl = downloadUrl(title);
+    public static void downloadSong(String title, String saveAs) {
+        downloadByUrl(downloadUrl(title), saveAs);
+    }
 
+    public static void downloadByUrl(String downloadUrl, String saveAs) {
+        try {
             downloadUrl = downloadUrl.replace("\\", "");
 
             URL url = new URL(downloadUrl);
@@ -213,7 +215,7 @@ public class Downloader {
             os.close();
 
             //System.out.println("Song downloaded: " + savePath + title + ".mp3");
-            
+
         } catch (ProtocolException e) {
             e.printStackTrace();
         } catch (MalformedURLException e) {
@@ -223,7 +225,7 @@ public class Downloader {
         }
     }
 
-    private static String urlFromXML(Document xmlDocument)
+    private static String getFirstUrl(Document xmlDocument)
     {
         String url = null;
         XPath xPath =  XPathFactory.newInstance().newXPath();
@@ -238,6 +240,45 @@ public class Downloader {
         return url;
     }
 
+    public static Map<String, String> getAllUrls(String title) {
+        Map<String, String> res = new HashMap<>();
+        XPath xPath = XPathFactory.newInstance().newXPath();
+        String expression = "/response/audio";
+
+        try {
+            NodeList nodeList = (NodeList) xPath.compile(expression).evaluate(getVkSongDocument(title), XPathConstants.NODESET);
+            for (int i = 0; i < nodeList.getLength(); i++) {
+                Node child = nodeList.item(i).getFirstChild();
+                String artist = null;
+                String foundTitle = null;
+                String url = null;
+                while (true) {
+                    String nodeName = child.getNodeName();
+
+                    if (nodeName.equals("artist")) {
+                        artist = child.getFirstChild().getNodeValue();
+                    } else if (nodeName.equals("title")) {
+                        foundTitle = child.getFirstChild().getNodeValue();
+                    } else if (nodeName.equals("url")) {
+                        url = child.getFirstChild().getNodeValue();
+                        break;
+                    }
+
+                    Node nextSibling = child.getNextSibling();
+                    if (nextSibling != null) {
+                        child = nextSibling;
+                    } else {
+                        break;
+                    }
+                }
+                res.put(artist + " - " + foundTitle, url);
+            }
+        } catch (XPathExpressionException e) {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
     public static void main(String[] args)
     {
 //        String artist = "Scorpions";
@@ -249,5 +290,7 @@ public class Downloader {
 //        }
         downloadSong("Scorpions - Still Loving You", "/Users/Vlad/");
     }
+
+
 }
 
