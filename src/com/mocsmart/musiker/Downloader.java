@@ -108,6 +108,7 @@ public class Downloader {
                     "method=album.getinfo&" +
                     "artist=" + URLEncoder.encode(artist, "UTF-8") +
                     "&album=" + URLEncoder.encode(album, "UTF-8") +
+                    "&autocorrect=1" +
                     "&api_key=" + lastfmApiKey;
 
             URL url = new URL(urlString);

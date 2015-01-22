@@ -1,5 +1,6 @@
 package com.mocsmart.musiker;
 
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -63,6 +64,7 @@ public class MainController implements Initializable {
     private Label stateLabel;
 
     private MediaPlayer player;
+    private ChangeListener currentTimeListener;
     private Map<String, List<String>> cache = new HashMap<String, List<String>>(); // key - album name, value - list of tracks
     private String saveDir;
     private String searchMode = "Artist";
@@ -132,6 +134,32 @@ public class MainController implements Initializable {
                 downloadMode = s2;
             }
         });
+
+        currentTimeListener = new ChangeListener<Duration>() {
+            @Override
+            public void changed(ObservableValue<? extends Duration> observableValue, Duration duration, Duration duration2) {
+                Duration total = player.getTotalDuration();
+                Duration left = duration2.subtract(total);
+
+                double progress = duration2.toMillis() / total.toMillis();
+                progressBar.setProgress(progress);
+
+                int secs = (int) left.toSeconds();
+                int mins = secs / 60;
+                secs %= 60;
+                secs = abs(secs);
+                String minus = (duration2.lessThan(total) && mins == 0) ? "-" : "";
+                String zero = (secs < 10) ? "0" : "";
+                timeLeftLabel.setText(minus + mins + ":" + zero + secs);
+            }
+        };
+
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                searchField.requestFocus();
+            }
+        });
     }
 
     @FXML
@@ -148,29 +176,13 @@ public class MainController implements Initializable {
             player = new MediaPlayer(new Media(Downloader.downloadUrl(title)));
 
             titleLabel.setText(title);
-            player.currentTimeProperty().addListener(new ChangeListener<Duration>() {
-                @Override
-                public void changed(ObservableValue<? extends Duration> observableValue, Duration duration, Duration duration2) {
-                    Duration total = player.getTotalDuration();
-                    Duration left = duration2.subtract(total);
-
-                    double progress = duration2.toMillis() / total.toMillis();
-                    progressBar.setProgress(progress);
-
-                    int secs = (int) left.toSeconds();
-                    int mins = secs / 60;
-                    secs %= 60;
-                    secs = abs(secs);
-                    String minus = (duration2.lessThan(total) && mins == 0) ? "-" : "";
-                    String zero = (secs < 10) ? "0" : "";
-                    timeLeftLabel.setText(minus + mins + ":" + zero + secs);
-                }
-            });
+            player.currentTimeProperty().addListener(currentTimeListener);
             player.play();
             playButton.getStyleClass().remove("play");
             playButton.getStyleClass().add("stop");
         } else {
             player.stop();
+            player.currentTimeProperty().removeListener(currentTimeListener);
             player = null;
             playButton.getStyleClass().remove("stop");
             playButton.getStyleClass().add("play");
