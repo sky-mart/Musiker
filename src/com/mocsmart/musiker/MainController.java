@@ -13,6 +13,8 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.stage.DirectoryChooser;
@@ -124,6 +126,11 @@ public class MainController implements Initializable {
             @Override
             public void changed(ObservableValue<? extends String> observableValue, String s, String s2) {
                 searchMode = s2;
+                if (searchMode.equals("Artist")) {
+                    resultPane.setDividerPosition(0, 0.5);
+                } else if (searchMode.equals("Track")) {
+                    resultPane.setDividerPosition(0, 0);
+                }
             }
         });
 
@@ -236,7 +243,6 @@ public class MainController implements Initializable {
             });
             new Thread(albumListTask).start();
         } else if (searchMode.equalsIgnoreCase("Track")) {
-            resultPane.setDividerPosition(0, 0);
             if (tracksUrlsCache != null) {
                 tracksUrlsCache.clear();
             }
@@ -345,5 +351,19 @@ public class MainController implements Initializable {
             }
         });
         new Thread(downloadSongsTask).start();
+    }
+
+    @FXML
+    private void doubleClick(MouseEvent me) {
+        if (me.getButton().equals(MouseButton.PRIMARY)) {
+            if(me.getClickCount() == 2){
+                if (player == null) {
+                    play();
+                } else {
+                    play();
+                    play();
+                }
+            }
+        }
     }
 }
