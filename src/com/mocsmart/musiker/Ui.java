@@ -1,6 +1,5 @@
 package com.mocsmart.musiker;
 
-import com.sun.javafx.css.StyleManager;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -10,7 +9,6 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
-import javafx.scene.media.MediaPlayer;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
@@ -18,9 +16,6 @@ import javafx.stage.Stage;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 
@@ -165,7 +160,7 @@ public class Ui extends Application {
         TabPane tabPane     = new TabPane();
         Tab mainTab         = new Tab("Main");
         try {
-            mainTab.setContent((Node) FXMLLoader.load(getClass().getResource("main.fxml")));
+            mainTab.setContent((Node) FXMLLoader.load(getClass().getResource("assets/main.fxml")));
         } catch (IOException e) {
             e.printStackTrace();
         }

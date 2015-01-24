@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<project name="Musiker" basedir="." default="jar" xmlns:fx="javafx:com.sun.javafx.tools.ant">
+
+    <property name="JAVA_HOME" value="/Library/Java/JavaVirtualMachines/jdk1.8.0_31.jdk/Contents/Home"/>
+
+    <property name="src.dir"        value="src"/>
+    <property name="classes.dir"    value="out/production/Musiker"/>
+    <property name="jar.dir"        value="out/artifacts/Musiker"/>
+    <property name="lib.dir"        value="lib"/>
+    <property name="assets.dir"     value="${src.dir}/com/mocsmart/musiker/assets"/>
+
+    <property name="main-class"     value="com.mocsmart.musiker.Ui"/>
+    <property name="mp3agic"        value="mp3agic-0.8.4-SNAPSHOT.jar"/>
+
+
+    <path id="classpath">
+        <fileset dir="${lib.dir}" includes="**/*.jar"/>
+    </path>
+
+
+    <target name="clean">
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${jar.dir}"/>
+
+        <delete>
+            <fileset dir="${classes.dir}" includes="**/*"/>
+            <fileset dir="${jar.dir}" includes="**/*"/>
+        </delete>
+    </target>
+
+    <target name="compile" depends="clean">
+        <javac includeantruntime="false"
+               srcdir="${src.dir}"
+               destdir="${classes.dir}"
+               classpathref="classpath"
+               fork="yes">
+        </javac>
+    </target>
+
+    <target name="jar" depends="compile">
+        <mkdir dir="${jar.dir}"/>
+        <copy todir="${jar.dir}">
+            <path refid="classpath"></path>
+            <file name="musiker.ps"/>
+        </copy>
+        <jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
+            <manifest>
+                <attribute name="Class-Path" value="${mp3agic}"/>
+                <attribute name="Main-Class" value="${main-class}"/>
+            </manifest>
+            <fileset dir="${src.dir}">
+                <exclude name="**/*.java"/>
+            </fileset>
+        </jar>
+    </target>
+
+    <!--<target name="jar" depends="compile">-->
+        <!--<taskdef resource="com/sun/javafx/tools/ant/antlib.xml"-->
+                 <!--uri="javafx:com.sun.javafx.tools.ant"-->
+                 <!--classpath="${JAVA_HOME}/lib/ant-javafx.jar"/>-->
+
+        <!--<fx:application id="${ant.project.name}ID"-->
+                <!--name="${ant.project.name}"-->
+                <!--mainClass="${main-class}"/>-->
+
+        <!--<fx:resources id="${ant.project.name}Res">-->
+            <!--<fx:fileset dir="${jar.dir}" includes="${ant.project.name}.jar"/>-->
+        <!--</fx:resources>-->
+
+        <!--<fx:jar destfile="{jar.dir}/${ant.project.name}.jar">-->
+            <!--<fx:application refid="${ant.project.name}ID"/>-->
+            <!--<fx:resources refid="${ant.project.name}Res"/>-->
+            <!--<fileset dir="${classes.dir}"/>-->
+        <!--</fx:jar>-->
+
+        <!--<fx:deploy width="600" height="400"-->
+                   <!--outdir="${jar.dir}" embedJNLP="true"-->
+                   <!--outfile="${ant.project.name}"-->
+                   <!--nativeBundles="all">-->
+
+            <!--<fx:application refId="${ant.project.name}ID"/>-->
+
+            <!--<fx:resources refid="${ant.project.name}Res"/>-->
+
+            <!--<fx:info title="Musiker"-->
+                     <!--vendor="Mocsmart"/>-->
+
+        <!--</fx:deploy>-->
+    <!--</target>-->
+
+</project>
