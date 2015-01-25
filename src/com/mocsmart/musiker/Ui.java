@@ -53,7 +53,6 @@ public class Ui extends Application {
         createAuthScene();
         createMainScene();
 
-        Downloader.setUi(this);
         String accessGranted = props.getProperty(accessGrantedPropertyName);
         if (accessGranted.equalsIgnoreCase("NO")) {
             stage.setScene(authScene);
@@ -66,7 +65,7 @@ public class Ui extends Application {
                     "response_type=token");
         } else if (accessGranted.equalsIgnoreCase("YES")) {
             String accessToken = props.getProperty(accessTokenPropertyName);
-            Downloader.setVkAccessToken(accessToken);
+            Vk.setAccessToken(accessToken);
             stage.setScene(mainScene);
         }
 
@@ -125,7 +124,7 @@ public class Ui extends Application {
 
                             if (location.contains("https://oauth.vk.com/blank.html#")) {
                                 String[] info = getAccessInfo(location);
-                                Downloader.setVkAccessToken(info[0]);
+                                Vk.setAccessToken(info[0]);
 
                                 saveToken(info[0]);
                                 stage.setScene(mainScene);
@@ -135,8 +134,7 @@ public class Ui extends Application {
                 });
     }
 
-    private String[] getAccessInfo(String location)
-    {
+    private String[] getAccessInfo(String location) {
         String[] info = new String[3];
         int from, to;
 
@@ -155,8 +153,7 @@ public class Ui extends Application {
         return info;
     }
 
-    private void createMainScene()
-    {
+    private void createMainScene() {
         TabPane tabPane     = new TabPane();
         Tab mainTab         = new Tab("Main");
         try {

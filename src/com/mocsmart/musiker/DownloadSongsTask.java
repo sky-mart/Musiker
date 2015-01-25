@@ -41,7 +41,7 @@ public class DownloadSongsTask extends Task<Void> {
                 updateMessage("Downloading " + title + " (total " + downloadCount + "/" + songCount + ")");
                 String fullTitle = artist + " - " + title;
                 String mp3FileName = savePath + album + "/" + fullTitle + ".mp3";
-                Downloader.downloadSong(fullTitle, mp3FileName + ".tmp");
+                Vk.downloadSong(fullTitle, mp3FileName + ".tmp");
                 fixMp3Tags(mp3FileName, artist, album, title, titles.indexOf(title) + 1);
                 downloadCount++;
             }

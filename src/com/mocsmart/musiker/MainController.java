@@ -89,7 +89,7 @@ public class MainController implements Initializable {
                                     @Override
                                     protected ObservableList<String> call() throws Exception {
                                         updateMessage("Getting list of tracks...");
-                                        List<String> tracks = Downloader.getTracks(artist, newAlbum);
+                                        List<String> tracks = Lastfm.getAlbumTracks(artist, newAlbum);
                                         updateMessage("Got list of tracks");
                                         return FXCollections.observableArrayList(tracks);
                                     }
@@ -181,7 +181,7 @@ public class MainController implements Initializable {
             if (searchMode.equals("Artist")) {
                 String artist = searchField.getText();
                 title = artist + " - " + titles.get(0);
-                player = new MediaPlayer(new Media(Downloader.downloadUrl(title)));
+                player = new MediaPlayer(new Media(Vk.getSongDownloadUrl(title)));
             } else {
                 title = titles.get(0);
                 player = new MediaPlayer(new Media(tracksUrlsCache.get(title)));
@@ -225,7 +225,7 @@ public class MainController implements Initializable {
                 @Override
                 protected ObservableList<String> call() throws Exception {
                     updateMessage("Getting list of albums...");
-                    List<String> albums = Downloader.getAlbums(artist);
+                    List<String> albums = Lastfm.getArtistAlbums(artist);
                     updateMessage("Got list of albums");
                     return FXCollections.observableArrayList(albums);
                 }
@@ -253,7 +253,7 @@ public class MainController implements Initializable {
                 @Override
                 protected ObservableList<String> call() throws Exception {
                     updateMessage("Getting list of tracks...");
-                    tracksUrlsCache = Downloader.getAllUrls(title);
+                    tracksUrlsCache = Vk.getAllSongUrls(title);
                     updateMessage("Got list of tracks");
                     return FXCollections.observableArrayList(tracksUrlsCache.keySet());
                 }
@@ -277,12 +277,11 @@ public class MainController implements Initializable {
         if (searchMode.equals("Artist")) {
             downloadByArtist();
         } else if (searchMode.equals("Track") && downloadMode.equals("Tracks")) {
-            simpleDownload();
+            simpleListDownload();
         }
-
     }
 
-    private void simpleDownload() {
+    private void simpleListDownload() {
         List<String> titles = trackListView.getSelectionModel().getSelectedItems();
         List<String> urls = new ArrayList<>();
         for (String title : titles) {
