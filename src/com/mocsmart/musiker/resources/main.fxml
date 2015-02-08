@@ -84,7 +84,7 @@
          <children>
             <HBox>
                <children>
-                  <TextField fx:id="searchField" onKeyPressed="#search" prefHeight="30.0" prefWidth="255.0" promptText="Search" styleClass="searchField" HBox.hgrow="ALWAYS" />
+                  <TextField fx:id="searchField" onKeyPressed="#search" promptText="Search" styleClass="searchField" HBox.hgrow="ALWAYS" />
                   <ComboBox fx:id="searchModeCombo" minWidth="-Infinity" promptText="Artist" />
                   <Button fx:id="downloadButton" alignment="CENTER_RIGHT" minWidth="-Infinity" mnemonicParsing="false" onAction="#download" prefHeight="26.0" prefWidth="26.0">
                      <HBox.margin>

@@ -4,19 +4,19 @@
 }
 
 .play {
-    -fx-background-image: url(play.png);
+    -fx-background-image: url(images/play.png);
 }
 
 .pause {
-    -fx-background-image: url(pause.png);
+    -fx-background-image: url(images/pause.png);
 }
 
 .stop {
-    -fx-background-image: url(stop.png);
+    -fx-background-image: url(images/stop.png);
 }
 
 .download {
-    -fx-background-image: url(download.png);
+    -fx-background-image: url(images/download.png);
 }
 
 .title {
@@ -38,7 +38,7 @@
 }
 
 .searchField {
-    -fx-background-image: url('magglass.png');
+    -fx-background-image: url('images/magglass.png');
     -fx-background-repeat: no-repeat;
     -fx-background-position: right 6 center;
     -fx-background-size: 16 16;

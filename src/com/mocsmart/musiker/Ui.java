@@ -4,18 +4,25 @@ import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Worker.State;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.JavaFXBuilderFactory;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 
 import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Properties;
 
 
@@ -36,7 +43,6 @@ public class Ui extends Application {
     private int DEFAULT_WIDTH = 700;
     private int DEFAULT_HEIGHT = 400;
     private String saveDir;
-
 
     public static void main(String[] args) {
         launch(args);
@@ -154,23 +160,42 @@ public class Ui extends Application {
     }
 
     private void createMainScene() {
+
+
         TabPane tabPane     = new TabPane();
         Tab mainTab         = new Tab("Main");
+        Tab downloadsTab    = new Tab("Downloads");
+        Tab optionsTab      = new Tab("Options");
+
         try {
-            mainTab.setContent((Node) FXMLLoader.load(getClass().getResource("assets/main.fxml")));
+            mainTab.setContent((Node) FXMLLoader.load(getClass().getResource("resources/main.fxml")));
+            downloadsTab.setContent((Node) FXMLLoader.load(getClass().getResource("resources/downloads.fxml")));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Tab downloadsTab    = new Tab("Downloads");
-        Tab optionsTab      = new Tab("Options");
+
 
         tabPane.getTabs().addAll(mainTab, downloadsTab, optionsTab);
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         tabPane.setTabMinWidth(80);
 
-        //tabPane.getStylesheets().add(this.getClass().getResource("style.css").toExternalForm());
+        tabPane.getSelectionModel().select(1);
+
         mainScene = new Scene(tabPane, DEFAULT_WIDTH, DEFAULT_HEIGHT);
     }
 
+    public static MainController mainController() {
+        URL location = Ui.class.getResource("resources/main.fxml");
+
+        FXMLLoader fxmlLoader = new FXMLLoader();
+        fxmlLoader.setLocation(location);
+        fxmlLoader.setBuilderFactory(new JavaFXBuilderFactory());
+        try {
+            fxmlLoader.load(location.openStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return fxmlLoader.getController();
+    }
 }
 
